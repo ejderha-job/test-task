@@ -3,6 +3,7 @@ import { Button, Card, DataList, Heading, HStack, Stack, Text, Timeline } from '
 import { useParams } from 'react-router-dom'
 import { changeTaskStatus, fetchTask } from '../api'
 import { useAuth } from '../auth/AuthContext'
+import { AssignExecutorDialog } from '../components/AssignExecutorDialog'
 import { BackLink } from '../components/BackLink'
 import { ErrorMessage } from '../components/ErrorMessage'
 import { PageLoadFailed } from '../components/PageLoadFailed'
@@ -43,7 +44,7 @@ export default function TaskPage() {
 
 function TaskView({ task, busy, onChanged }: { task: Task; busy: boolean; onChanged: () => void }) {
   const details = [
-    { label: 'Исполнитель', value: personName(task.assignee) },
+    { label: 'Исполнитель', value: <TaskAssignee task={task} onChanged={onChanged} /> },
     { label: 'Срок', value: formatDate(task.due_date) },
     { label: 'Описание', value: task.description || '—' },
   ]
@@ -78,6 +79,16 @@ function TaskView({ task, busy, onChanged }: { task: Task; busy: boolean; onChan
       </Stack>
     </Stack>
   )
+}
+
+// Исполнитель назначается один раз: после назначения показываем только имя
+function TaskAssignee({ task, onChanged }: { task: Task; onChanged: () => void }) {
+  const { profile } = useAuth()
+
+  if (task.assignee) return <>{personName(task.assignee)}</>
+  if (profile?.role === 'provider')
+    return <AssignExecutorDialog taskId={task.id} onAssigned={onChanged} />
+  return <Text color="fg.muted">Не назначен</Text>
 }
 
 function TaskActions({ task, busy, onChanged }: { task: Task; busy: boolean; onChanged: () => void }) {

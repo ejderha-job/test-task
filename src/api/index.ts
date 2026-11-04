@@ -90,7 +90,6 @@ export type NewTask = {
   title: string
   description: string
   dueDate: string | null
-  assigneeId: string
 }
 
 // Возвращает id созданной задачи
@@ -101,7 +100,6 @@ export async function createTask(task: NewTask) {
       p_title: task.title,
       p_description: task.description,
       p_due_date: task.dueDate ?? undefined,
-      p_assignee_id: task.assigneeId,
     }),
   )
 }
@@ -111,4 +109,13 @@ export async function createObject(object: { name: string; address: string }) {
   return unwrap(
     await supabase.rpc('create_object', { p_name: object.name, p_address: object.address }),
   )
+}
+
+// Назначить исполнителя задаче без исполнителя (сменить потом нельзя)
+export async function assignTask(taskId: string, assigneeId: string) {
+  const { error } = await supabase.rpc('assign_task', {
+    p_task_id: taskId,
+    p_assignee_id: assigneeId,
+  })
+  if (error) throw new Error(error.message)
 }

@@ -1,13 +1,11 @@
 import { Input, Textarea } from '@chakra-ui/react'
-import { createTask, fetchExecutors } from '../api'
-import { useAsync } from '../hooks/useAsync'
-import { ExecutorSelect, type Executor } from './ExecutorSelect'
+import { createTask } from '../api'
 import { FormDialog } from './FormDialog'
 import type { FormFieldConfig } from './FormFields'
 
-type FormValues = { title: string; description: string; dueDate: string; assigneeId: string }
+type FormValues = { title: string; description: string; dueDate: string }
 
-const fields: FormFieldConfig<FormValues, Executor[]>[] = [
+const fields: FormFieldConfig<FormValues>[] = [
   {
     name: 'title',
     label: 'Название',
@@ -30,34 +28,17 @@ const fields: FormFieldConfig<FormValues, Executor[]>[] = [
       <Input type="date" value={value} onChange={(e) => onChange(e.target.value)} />
     ),
   },
-  {
-    name: 'assigneeId',
-    label: 'Исполнитель',
-    required: true,
-    helper: 'После создания задачи исполнителя сменить нельзя',
-    render: ({ value, onChange, ctx: executors }) => (
-      <ExecutorSelect
-        executors={executors}
-        value={value}
-        onChange={onChange}
-        placeholder="Выберите исполнителя"
-      />
-    ),
-  },
 ]
 
-const emptyForm: FormValues = { title: '', description: '', dueDate: '', assigneeId: '' }
+const emptyForm: FormValues = { title: '', description: '', dueDate: '' }
 
 export function NewTaskDialog({ objectId, onCreated }: { objectId: string; onCreated: () => void }) {
-  const executors = useAsync(fetchExecutors, [])
-
   const handleSubmit = async (values: FormValues) => {
     await createTask({
       objectId,
       title: values.title,
       description: values.description,
       dueDate: values.dueDate || null,
-      assigneeId: values.assigneeId,
     })
     onCreated()
   }
@@ -69,8 +50,7 @@ export function NewTaskDialog({ objectId, onCreated }: { objectId: string; onCre
       submitLabel="Создать задачу"
       fields={fields}
       initialValues={emptyForm}
-      ctx={executors.data ?? []}
-      blockingError={executors.error && `Не удалось загрузить исполнителей: ${executors.error}`}
+      ctx={undefined}
       onSubmit={handleSubmit}
     />
   )

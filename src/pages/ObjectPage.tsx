@@ -9,7 +9,7 @@ import { PageLoadFailed } from '../components/PageLoadFailed'
 import { Loading } from '../components/Status'
 import { TaskStatusBadge } from '../components/TaskStatusBadge'
 import { useAsync } from '../hooks/useAsync'
-import { formatDate, personName, type TaskStatus } from '../lib/tasks'
+import { assigneeName, formatDate, type TaskStatus } from '../lib/tasks'
 
 type ObjectTask = {
   id: string
@@ -69,7 +69,7 @@ function ObjectTaskList({ tasks }: { tasks: ObjectTask[] }) {
       key={t.id}
       to={`/tasks/${t.id}`}
       title={t.title}
-      meta={`${personName(t.assignee)} · до ${formatDate(t.due_date)}`}
+      meta={`${assigneeName(t.assignee)} · до ${formatDate(t.due_date)}`}
       aside={<TaskStatusBadge status={t.status} />}
     />
   ))

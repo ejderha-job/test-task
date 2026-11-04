@@ -44,3 +44,6 @@ export const formatDateTime = (iso: string) =>
 
 export const personName = (p: { full_name: string | null; email: string } | null, fallback = '—') =>
   p ? (p.full_name ?? p.email) : fallback
+
+export const assigneeName = (p: { full_name: string | null; email: string } | null) =>
+  personName(p, 'Не назначен')
