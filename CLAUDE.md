@@ -4,7 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project state
 
-Vite + React 19 + TypeScript app for managing objects (sites) and their tasks. All data (auth, objects, tasks, task history) comes from Supabase. Test data lives in `supabase/seed.sql`. `@chakra-ui/react` is installed but not wired up (no `ChakraProvider`).
+Vite + React 19 + TypeScript app for managing objects (sites) and their tasks. All data (auth, objects, tasks, task history) comes from Supabase. Test data lives in `supabase/seed.sql`.
+
+## UI
+
+Chakra UI v3 (`ChakraProvider value={defaultSystem}` in `src/main.tsx`; requires `@emotion/react`). No custom CSS files — style with Chakra props and semantic tokens (`fg.muted`, `bg.subtle`, …) so dark mode works. Dark mode follows the OS via `src/theme/colorMode.ts`, which toggles the `dark` class on `<html>` (no `next-themes`). Shared bits: `ListItemCard` (clickable list card), `TaskStatusBadge`, `BackLink`, `Loading`/`LoadError` in `src/components/`. Router links are rendered through Chakra with `asChild`.
 
 ## Routing
 

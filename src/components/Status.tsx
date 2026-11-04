@@ -1,17 +1,27 @@
+import { Alert, Button, Center, Spinner } from '@chakra-ui/react'
+
 // Состояния загрузки / ошибки для страниц
 export function Loading() {
-  return <p className="muted">Загрузка…</p>
+  return (
+    <Center py="10">
+      <Spinner size="lg" color="blue.solid" />
+    </Center>
+  )
 }
 
 export function LoadError({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
-    <div>
-      <p className="error">Не удалось загрузить данные: {message}</p>
+    <Alert.Root status="error">
+      <Alert.Indicator />
+      <Alert.Content>
+        <Alert.Title>Не удалось загрузить данные</Alert.Title>
+        <Alert.Description>{message}</Alert.Description>
+      </Alert.Content>
       {onRetry && (
-        <button type="button" onClick={onRetry}>
+        <Button size="sm" variant="outline" alignSelf="center" onClick={onRetry}>
           Повторить
-        </button>
+        </Button>
       )}
-    </div>
+    </Alert.Root>
   )
 }

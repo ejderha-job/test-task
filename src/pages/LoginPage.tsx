@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import '../App.css'
+import { Alert, Box, Button, Card, Center, Field, Input, Stack } from '@chakra-ui/react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 
@@ -28,34 +28,45 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="page page-narrow">
-      <h1>Вход</h1>
-      <form className="form" onSubmit={handleSubmit}>
-        <label>
-          Email
-          <input
-            type="email"
-            required
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </label>
-        <label>
-          Пароль
-          <input
-            type="password"
-            required
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </label>
-        {error && <p className="error">{error}</p>}
-        <button type="submit" disabled={submitting}>
-          {submitting ? 'Вход…' : 'Войти'}
-        </button>
-      </form>
-    </main>
+    <Center minH="100dvh" bg="bg.subtle" px="4">
+      <Card.Root w="full" maxW="sm">
+        <Card.Header>
+          <Card.Title textStyle="2xl">Вход</Card.Title>
+        </Card.Header>
+        <Card.Body>
+          <Box as="form" onSubmit={handleSubmit}>
+            <Stack gap="4">
+              <Field.Root required>
+                <Field.Label>Email</Field.Label>
+                <Input
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </Field.Root>
+              <Field.Root required>
+                <Field.Label>Пароль</Field.Label>
+                <Input
+                  type="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </Field.Root>
+              {error && (
+                <Alert.Root status="error" size="sm">
+                  <Alert.Indicator />
+                  <Alert.Title>{error}</Alert.Title>
+                </Alert.Root>
+              )}
+              <Button type="submit" colorPalette="blue" loading={submitting} loadingText="Вход…">
+                Войти
+              </Button>
+            </Stack>
+          </Box>
+        </Card.Body>
+      </Card.Root>
+    </Center>
   )
 }

@@ -1,5 +1,6 @@
-import { Link } from 'react-router-dom'
+import { Badge, Heading, Stack, Text } from '@chakra-ui/react'
 import { fetchObjects } from '../api'
+import { ListItemCard } from '../components/ListItemCard'
 import { LoadError, Loading } from '../components/Status'
 import { useAsync } from '../hooks/useAsync'
 
@@ -7,26 +8,27 @@ export default function ObjectsPage() {
   const { data: objects, error, loading, reload } = useAsync(fetchObjects, [])
 
   return (
-    <main className="page">
-      <h1>Объекты</h1>
+    <Stack gap="6">
+      <Heading size="2xl">Объекты</Heading>
       {loading ? (
         <Loading />
       ) : error ? (
         <LoadError message={error} onRetry={reload} />
       ) : objects?.length === 0 ? (
-        <p className="muted">Объектов нет</p>
+        <Text color="fg.muted">Объектов нет</Text>
       ) : (
-        <ul className="list">
+        <Stack gap="3">
           {objects?.map((obj) => (
-            <li key={obj.id}>
-              <Link to={`/objects/${obj.id}`}>{obj.name}</Link>
-              <div className="muted">
-                {obj.address} · задач: {obj.tasks[0]?.count ?? 0}
-              </div>
-            </li>
+            <ListItemCard
+              key={obj.id}
+              to={`/objects/${obj.id}`}
+              title={obj.name}
+              meta={obj.address}
+              aside={<Badge variant="outline">задач: {obj.tasks[0]?.count ?? 0}</Badge>}
+            />
           ))}
-        </ul>
+        </Stack>
       )}
-    </main>
+    </Stack>
   )
 }
