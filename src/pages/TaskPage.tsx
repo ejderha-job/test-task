@@ -1,87 +1,102 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { changeTaskStatus, fetchTask } from '../api'
 import { useAuth } from '../auth/AuthContext'
+import { LoadError, Loading } from '../components/Status'
+import { useAsync } from '../hooks/useAsync'
 import {
-  objects,
-  statusActions,
+  availableActions,
+  formatDate,
+  formatDateTime,
+  personName,
   statusLabels,
-  tasks,
-  userName,
-  type Task,
   type TaskStatus,
-} from '../data/mock'
+} from '../lib/tasks'
 
 export default function TaskPage() {
-  const { taskId } = useParams()
+  const { taskId = '' } = useParams()
   const { profile } = useAuth()
-  const initial = tasks.find((t) => t.id === taskId)
-  // Локальная копия, пока действия не отправляются на сервер
-  const [task, setTask] = useState<Task | undefined>(initial)
+  const { data: task, error, loading, reload } = useAsync(() => fetchTask(taskId), [taskId])
+  const [pending, setPending] = useState(false)
+  const [actionError, setActionError] = useState<string | null>(null)
 
-  if (!task) {
+  // Первая загрузка; при перезапросе после действия показываем старые данные
+  if (loading && !task)
     return (
       <main className="page">
-        <h1>Задача не найдена</h1>
-        <Link to="/objects">← К списку объектов</Link>
+        <Loading />
       </main>
     )
+  if (error || !task)
+    return (
+      <main className="page">
+        <Link to="/objects">← Объекты</Link>
+        {error ? <LoadError message={error} onRetry={reload} /> : <h1>Задача не найдена</h1>}
+      </main>
+    )
+
+  const applyAction = async (to: TaskStatus) => {
+    setPending(true)
+    setActionError(null)
+    try {
+      await changeTaskStatus(task.id, to)
+      reload()
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setPending(false)
+    }
   }
 
-  const obj = objects.find((o) => o.id === task.objectId)
-
-  const applyAction = (to: TaskStatus) => {
-    // TODO: запрос к API
-    setTask({
-      ...task,
-      status: to,
-      history: [
-        ...task.history,
-        {
-          date: new Date().toLocaleString('ru-RU'),
-          author: profile?.full_name ?? profile?.email ?? '—',
-          text: `Статус: ${statusLabels[to]}`,
-        },
-      ],
-    })
-  }
+  const actions = availableActions(task, profile)
 
   return (
     <main className="page">
-      {obj && <Link to={`/objects/${obj.id}`}>← {obj.name}</Link>}
+      {task.object && <Link to={`/objects/${task.object.id}`}>← {task.object.name}</Link>}
       <h1>{task.title}</h1>
 
       <dl className="details">
         <dt>Статус</dt>
         <dd>{statusLabels[task.status]}</dd>
         <dt>Исполнитель</dt>
-        <dd>{userName(task.assigneeId)}</dd>
+        <dd>{personName(task.assignee)}</dd>
         <dt>Срок</dt>
-        <dd>{task.dueDate}</dd>
+        <dd>{formatDate(task.due_date)}</dd>
         <dt>Описание</dt>
-        <dd>{task.description}</dd>
+        <dd>{task.description || '—'}</dd>
       </dl>
 
-      {statusActions[task.status].length > 0 && (
+      {actions.length > 0 && (
         <div className="actions">
-          {statusActions[task.status].map((a) => (
-            <button key={a.to} type="button" onClick={() => applyAction(a.to)}>
+          {actions.map((a) => (
+            <button
+              key={a.to}
+              type="button"
+              disabled={pending || loading}
+              onClick={() => applyAction(a.to)}
+            >
               {a.label}
             </button>
           ))}
         </div>
       )}
+      {actionError && <p className="error">{actionError}</p>}
 
       <h2>История</h2>
-      <ul className="list">
-        {[...task.history].reverse().map((h, i) => (
-          <li key={i}>
-            {h.text}
-            <div className="muted">
-              {h.date} · {h.author}
-            </div>
-          </li>
-        ))}
-      </ul>
+      {task.history.length === 0 ? (
+        <p className="muted">Пусто</p>
+      ) : (
+        <ul className="list">
+          {task.history.map((h) => (
+            <li key={h.id}>
+              {h.text}
+              <div className="muted">
+                {formatDateTime(h.created_at)} · {personName(h.author)}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </main>
   )
 }

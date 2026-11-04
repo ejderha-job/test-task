@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project state
 
-Vite + React 19 + TypeScript app for managing objects (sites) and their tasks. Auth is real (Supabase); objects and tasks still come from `src/data/mock.ts` (marked with `TODO` where API requests should go). Mock users are matched to Supabase users by email. `@chakra-ui/react` is installed but not wired up (no `ChakraProvider`).
+Vite + React 19 + TypeScript app for managing objects (sites) and their tasks. All data (auth, objects, tasks, task history) comes from Supabase. Test data lives in `supabase/seed.sql`. `@chakra-ui/react` is installed but not wired up (no `ChakraProvider`).
 
 ## Routing
 
@@ -15,9 +15,10 @@ Vite + React 19 + TypeScript app for managing objects (sites) and their tasks. A
 - Project ref `zmybghjwmghkvjzhbjvl`. Client in `src/lib/supabase.ts`, configured from `.env.local` (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`; template in `.env.example`). Only the public anon key belongs in the frontend.
 - `src/auth/`: `AuthProvider` tracks session + the user's row from `public.profiles`; `useAuth()` reads it; `RequireAuth` guards the layout route and optionally a role (`role="executor"` on `/my-tasks`).
 - Roles are `provider` and `executor` (`public.user_role`), stored in `profiles.role` and sourced from the user's `app_metadata.role` via triggers — see `supabase/migrations/`. Set roles only via the Admin API / service role, never `user_metadata`.
+- Data access: all queries are in `src/api/index.ts` (typed client; `src/lib/database.types.ts` is generated — regenerate with the command in `src/lib/supabase.ts` after schema changes). Pages load via `useAsync` (`src/hooks/useAsync.ts`).
+- Tables `objects`, `tasks`, `task_history` are read-only for clients via RLS. Status changes go only through the RPC `change_task_status`, which checks the transition and role and writes history. The frontend mirror of those rules (`availableActions` in `src/lib/tasks.ts`) only decides which buttons to show — keep both in sync.
 - SQL is run with `supabase db query --linked --project-ref zmybghjwmghkvjzhbjvl -f <file>` (goes through the Management API). Commands needing a direct Postgres connection (`migration repair`, likely `db push`) hang in this environment.
 
-Task status transitions available on the task page are driven by `statusActions` in `mock.ts`.
 
 ## Commands
 

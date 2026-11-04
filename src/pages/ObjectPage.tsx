@@ -1,37 +1,48 @@
 import { Link, useParams } from 'react-router-dom'
-import { objects, statusLabels, tasks, userName } from '../data/mock'
+import { fetchObjectWithTasks } from '../api'
+import { LoadError, Loading } from '../components/Status'
+import { useAsync } from '../hooks/useAsync'
+import { formatDate, personName, statusLabels } from '../lib/tasks'
 
 export default function ObjectPage() {
-  const { objectId } = useParams()
-  const obj = objects.find((o) => o.id === objectId)
+  const { objectId = '' } = useParams()
+  const { data, error, loading, reload } = useAsync(
+    () => fetchObjectWithTasks(objectId),
+    [objectId],
+  )
 
-  if (!obj) {
+  if (loading)
     return (
       <main className="page">
-        <h1>Объект не найден</h1>
-        <Link to="/objects">← К списку объектов</Link>
+        <Loading />
       </main>
     )
-  }
+  if (error || !data?.object)
+    return (
+      <main className="page">
+        <Link to="/objects">← Объекты</Link>
+        {error ? <LoadError message={error} onRetry={reload} /> : <h1>Объект не найден</h1>}
+      </main>
+    )
 
-  const objectTasks = tasks.filter((t) => t.objectId === obj.id)
+  const { object, tasks } = data
 
   return (
     <main className="page">
       <Link to="/objects">← Объекты</Link>
-      <h1>{obj.name}</h1>
-      <p className="muted">{obj.address}</p>
+      <h1>{object.name}</h1>
+      <p className="muted">{object.address}</p>
 
       <h2>Задачи</h2>
-      {objectTasks.length === 0 ? (
+      {tasks.length === 0 ? (
         <p className="muted">Задач нет</p>
       ) : (
         <ul className="list">
-          {objectTasks.map((t) => (
+          {tasks.map((t) => (
             <li key={t.id}>
               <Link to={`/tasks/${t.id}`}>{t.title}</Link>
               <div className="muted">
-                {statusLabels[t.status]} · {userName(t.assigneeId)} · до {t.dueDate}
+                {statusLabels[t.status]} · {personName(t.assignee)} · до {formatDate(t.due_date)}
               </div>
             </li>
           ))}
