@@ -6,6 +6,7 @@ const palette: Record<TaskStatus, string> = {
   in_progress: 'blue',
   review: 'orange',
   done: 'green',
+  archived: 'purple',
 }
 
 export function TaskStatusBadge({ status }: { status: TaskStatus }) {

@@ -18,7 +18,7 @@ export function ArchiveObjectDialog({
     <ConfirmDialog
       triggerLabel="В архив"
       title="Архивировать объект?"
-      description={`Объект «${object.name}» пропадёт из списка объектов, а его задачи — из «Моих задач». Данные не удаляются.`}
+      description={`Объект «${object.name}» пропадёт из списка объектов. Его незавершённые задачи перейдут в статус «В архиве» — исполнители продолжат их видеть, но работать с ними будет нельзя. Данные не удаляются.`}
       confirmLabel="Архивировать"
       onConfirm={handleConfirm}
     />

@@ -86,7 +86,7 @@ function TaskAssignee({ task, onChanged }: { task: Task; onChanged: () => void }
   const { profile } = useAuth()
 
   if (task.assignee) return <>{personName(task.assignee)}</>
-  if (profile?.role === 'provider')
+  if (profile?.role === 'provider' && task.status !== 'archived')
     return <AssignExecutorDialog taskId={task.id} onAssigned={onChanged} />
   return <Text color="fg.muted">Не назначен</Text>
 }

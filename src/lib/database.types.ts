@@ -205,7 +205,7 @@ export type Database = {
       }
     }
     Enums: {
-      task_status: "new" | "in_progress" | "review" | "done"
+      task_status: "new" | "in_progress" | "review" | "done" | "archived"
       user_role: "provider" | "executor"
     }
     CompositeTypes: {
@@ -334,7 +334,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      task_status: ["new", "in_progress", "review", "done"],
+      task_status: ["new", "in_progress", "review", "done", "archived"],
       user_role: ["provider", "executor"],
     },
   },

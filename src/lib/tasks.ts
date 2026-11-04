@@ -8,6 +8,7 @@ export const statusLabels: Record<TaskStatus, string> = {
   in_progress: 'В работе',
   review: 'На проверке',
   done: 'Выполнена',
+  archived: 'В архиве',
 }
 
 type Transition = { label: string; to: TaskStatus; by: 'assignee' | 'provider' }
@@ -22,6 +23,8 @@ const transitions: Record<TaskStatus, Transition[]> = {
     { label: 'Вернуть в работу', to: 'in_progress', by: 'provider' },
   ],
   done: [],
+  // Ставится автоматически при архивации объекта, дальше переходов нет
+  archived: [],
 }
 
 export function availableActions(

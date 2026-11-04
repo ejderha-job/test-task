@@ -68,9 +68,8 @@ export async function fetchMyTasks(userId: string) {
   return unwrap(
     await supabase
       .from('tasks')
-      // !inner + фильтр — задачи архивных объектов не показываем
-      .select('id, title, status, due_date, object:objects!inner(name)')
-      .is('object.archived_at', null)
+      // Задачи архивных объектов тоже показываем — у них статус «В архиве»
+      .select('id, title, status, due_date, object:objects(name)')
       .eq('assignee_id', userId)
       .neq('status', 'done')
       .order('due_date'),
