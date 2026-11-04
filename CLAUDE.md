@@ -4,11 +4,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project state
 
-Vite + React 19 + TypeScript app for managing objects (sites) and their tasks. All data currently comes from `src/data/mock.ts` — there is no API or real auth yet (marked with `TODO` where requests should go). `@chakra-ui/react` is installed but not wired up (no `ChakraProvider`).
+Vite + React 19 + TypeScript app for managing objects (sites) and their tasks. Auth is real (Supabase); objects and tasks still come from `src/data/mock.ts` (marked with `TODO` where API requests should go). Mock users are matched to Supabase users by email. `@chakra-ui/react` is installed but not wired up (no `ChakraProvider`).
 
 ## Routing
 
 `react-router-dom` v7 data router, defined in `src/router.tsx` and mounted via `RouterProvider` in `src/main.tsx`. Every screen lives in `src/pages/`. `/login` is standalone; all other routes are children of `src/App.tsx`, which is the shared layout (nav + `<Outlet />`). Routes: `/objects`, `/objects/:objectId`, `/tasks/:taskId`, `/my-tasks`; `/` and unknown paths redirect.
+
+## Supabase / auth
+
+- Project ref `zmybghjwmghkvjzhbjvl`. Client in `src/lib/supabase.ts`, configured from `.env.local` (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`; template in `.env.example`). Only the public anon key belongs in the frontend.
+- `src/auth/`: `AuthProvider` tracks session + the user's row from `public.profiles`; `useAuth()` reads it; `RequireAuth` guards the layout route and optionally a role (`role="executor"` on `/my-tasks`).
+- Roles are `provider` and `executor` (`public.user_role`), stored in `profiles.role` and sourced from the user's `app_metadata.role` via triggers — see `supabase/migrations/`. Set roles only via the Admin API / service role, never `user_metadata`.
+- SQL is run with `supabase db query --linked --project-ref zmybghjwmghkvjzhbjvl -f <file>` (goes through the Management API). Commands needing a direct Postgres connection (`migration repair`, likely `db push`) hang in this environment.
 
 Task status transitions available on the task page are driven by `statusActions` in `mock.ts`.
 

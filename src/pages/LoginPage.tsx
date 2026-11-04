@@ -1,16 +1,30 @@
 import { useState, type FormEvent } from 'react'
 import '../App.css'
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
+import { useAuth } from '../auth/AuthContext'
 
 export default function LoginPage() {
-  const navigate = useNavigate()
+  const { session, loading, signIn } = useAuth()
+  const location = useLocation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
 
-  const handleSubmit = (e: FormEvent) => {
+  // Уже вошли — возвращаем туда, откуда пришли
+  if (!loading && session) {
+    const from = (location.state as { from?: string } | null)?.from ?? '/objects'
+    return <Navigate to={from} replace />
+  }
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
-    // TODO: запрос авторизации к API
-    navigate('/objects')
+    setSubmitting(true)
+    setError(null)
+    const { error } = await signIn(email, password)
+    setSubmitting(false)
+    if (error) setError(error)
+    // при успехе компонент перерисуется с session и сделает редирект выше
   }
 
   return (
@@ -37,7 +51,10 @@ export default function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
           />
         </label>
-        <button type="submit">Войти</button>
+        {error && <p className="error">{error}</p>}
+        <button type="submit" disabled={submitting}>
+          {submitting ? 'Вход…' : 'Войти'}
+        </button>
       </form>
     </main>
   )

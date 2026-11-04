@@ -86,3 +86,17 @@ button {
   padding: 8px 14px;
   cursor: pointer;
 }
+
+.nav {
+  align-items: center;
+}
+.nav-user {
+  margin-left: auto;
+}
+.nav-exit {
+  margin-left: 0;
+}
+.error {
+  color: #d32f2f;
+  font-size: 14px;
+}

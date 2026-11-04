@@ -37,10 +37,9 @@ export const statusActions: Record<TaskStatus, { label: string; to: TaskStatus }
   done: [],
 }
 
-export const currentUser: User = { id: 'u1', name: 'Иван Петров', email: 'ivan@example.com' }
-
+// Почты совпадают с пользователями в Supabase — по ним «Мои задачи» находит задачи вошедшего
 export const users: User[] = [
-  currentUser,
+  { id: 'u1', name: 'Иван Петров', email: 'ivan@example.com' },
   { id: 'u2', name: 'Анна Смирнова', email: 'anna@example.com' },
 ]
 

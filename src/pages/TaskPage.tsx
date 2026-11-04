@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
+import { useAuth } from '../auth/AuthContext'
 import {
-  currentUser,
   objects,
   statusActions,
   statusLabels,
@@ -13,6 +13,7 @@ import {
 
 export default function TaskPage() {
   const { taskId } = useParams()
+  const { profile } = useAuth()
   const initial = tasks.find((t) => t.id === taskId)
   // Локальная копия, пока действия не отправляются на сервер
   const [task, setTask] = useState<Task | undefined>(initial)
@@ -37,7 +38,7 @@ export default function TaskPage() {
         ...task.history,
         {
           date: new Date().toLocaleString('ru-RU'),
-          author: currentUser.name,
+          author: profile?.full_name ?? profile?.email ?? '—',
           text: `Статус: ${statusLabels[to]}`,
         },
       ],
