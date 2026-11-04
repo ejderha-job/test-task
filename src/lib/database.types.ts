@@ -17,18 +17,21 @@ export type Database = {
       objects: {
         Row: {
           address: string
+          archived_at: string | null
           created_at: string
           id: string
           name: string
         }
         Insert: {
           address?: string
+          archived_at?: string | null
           created_at?: string
           id?: string
           name: string
         }
         Update: {
           address?: string
+          archived_at?: string | null
           created_at?: string
           id?: string
           name?: string
@@ -161,6 +164,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      archive_object: { Args: { p_object_id: string }; Returns: undefined }
+      assert_object_active: {
+        Args: { p_object_id: string }
+        Returns: undefined
+      }
       assert_provider: { Args: never; Returns: undefined }
       assign_task: {
         Args: { p_assignee_id: string; p_task_id: string }
@@ -186,7 +194,15 @@ export type Database = {
         }
         Returns: string
       }
+      current_user_role: {
+        Args: never
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
       executor_name: { Args: { p_user_id: string }; Returns: string }
+      update_object: {
+        Args: { p_address?: string; p_name: string; p_object_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       task_status: "new" | "in_progress" | "review" | "done"

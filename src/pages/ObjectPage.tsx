@@ -1,8 +1,10 @@
-import { Heading, HStack, Stack, Text } from '@chakra-ui/react'
-import { useParams } from 'react-router-dom'
+import { Badge, Heading, HStack, Stack, Text } from '@chakra-ui/react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { fetchObjectWithTasks } from '../api'
 import { useAuth } from '../auth/AuthContext'
+import { ArchiveObjectDialog } from '../components/ArchiveObjectDialog'
 import { BackLink } from '../components/BackLink'
+import { EditObjectDialog } from '../components/EditObjectDialog'
 import { ListItemCard } from '../components/ListItemCard'
 import { NewTaskDialog } from '../components/NewTaskDialog'
 import { PageLoadFailed } from '../components/PageLoadFailed'
@@ -41,23 +43,49 @@ export default function ObjectPage() {
     )
 
   const { object, tasks } = data
+  const isArchived = object.archived_at !== null
+  // Архивный объект только для просмотра
+  const canEdit = profile?.role === 'provider' && !isArchived
 
   return (
     <Stack gap="6">
       <Stack gap="2">
         <BackLink to="/objects">Объекты</BackLink>
-        <Heading size="2xl">{object.name}</Heading>
+        <HStack justify="space-between" align="start" gap="4" wrap="wrap">
+          <HStack gap="3" wrap="wrap">
+            <Heading size="2xl">{object.name}</Heading>
+            {isArchived && <Badge colorPalette="gray">В архиве</Badge>}
+          </HStack>
+          {canEdit && <ObjectActions object={object} onSaved={reload} />}
+        </HStack>
         <Text color="fg.muted">{object.address}</Text>
       </Stack>
 
       <Stack gap="3">
         <HStack justify="space-between">
           <Heading size="lg">Задачи</Heading>
-          {profile?.role === 'provider' && <NewTaskDialog objectId={object.id} onCreated={reload} />}
+          {canEdit && <NewTaskDialog objectId={object.id} onCreated={reload} />}
         </HStack>
         <ObjectTaskList tasks={tasks} />
       </Stack>
     </Stack>
+  )
+}
+
+function ObjectActions({
+  object,
+  onSaved,
+}: {
+  object: { id: string; name: string; address: string }
+  onSaved: () => void
+}) {
+  const navigate = useNavigate()
+
+  return (
+    <HStack gap="2">
+      <EditObjectDialog object={object} onSaved={onSaved} />
+      <ArchiveObjectDialog object={object} onArchived={() => navigate('/objects', { replace: true })} />
+    </HStack>
   )
 }
 

@@ -1,32 +1,11 @@
-import { Input } from '@chakra-ui/react'
 import { createObject } from '../api'
+import { objectFields, type ObjectFormValues } from '../forms/objectFields'
 import { FormDialog } from './FormDialog'
-import type { FormFieldConfig } from './FormFields'
 
-type FormValues = { name: string; address: string }
-
-const fields: FormFieldConfig<FormValues>[] = [
-  {
-    name: 'name',
-    label: 'Название',
-    required: true,
-    render: ({ value, onChange }) => (
-      <Input value={value} onChange={(e) => onChange(e.target.value)} />
-    ),
-  },
-  {
-    name: 'address',
-    label: 'Адрес',
-    render: ({ value, onChange }) => (
-      <Input value={value} onChange={(e) => onChange(e.target.value)} />
-    ),
-  },
-]
-
-const emptyForm: FormValues = { name: '', address: '' }
+const emptyForm: ObjectFormValues = { name: '', address: '' }
 
 export function NewObjectDialog({ onCreated }: { onCreated: () => void }) {
-  const handleSubmit = async (values: FormValues) => {
+  const handleSubmit = async (values: ObjectFormValues) => {
     await createObject(values)
     onCreated()
   }
@@ -36,7 +15,7 @@ export function NewObjectDialog({ onCreated }: { onCreated: () => void }) {
       triggerLabel="+ Создать объект"
       title="Новый объект"
       submitLabel="Создать объект"
-      fields={fields}
+      fields={objectFields}
       initialValues={emptyForm}
       ctx={undefined}
       onSubmit={handleSubmit}

@@ -6,6 +6,12 @@ import { NewObjectDialog } from '../components/NewObjectDialog'
 import { LoadError, Loading } from '../components/Status'
 import { useAsync } from '../hooks/useAsync'
 
+// Исполнитель видит только объекты со своими задачами (RLS), поэтому и текст другой
+const emptyText = {
+  provider: 'Объектов нет',
+  executor: 'Пока нет объектов с вашими задачами',
+} as const
+
 type ObjectsState = ReturnType<typeof useAsync<Awaited<ReturnType<typeof fetchObjects>>>>
 
 export default function ObjectsPage() {
@@ -18,17 +24,17 @@ export default function ObjectsPage() {
         <Heading size="2xl">Объекты</Heading>
         {profile?.role === 'provider' && <NewObjectDialog onCreated={objects.reload} />}
       </HStack>
-      <ObjectList state={objects} />
+      <ObjectList state={objects} emptyText={emptyText[profile?.role ?? 'executor']} />
     </Stack>
   )
 }
 
-function ObjectList({ state }: { state: ObjectsState }) {
+function ObjectList({ state, emptyText }: { state: ObjectsState; emptyText: string }) {
   const { data: objects, error, loading, reload } = state
 
   if (loading && !objects) return <Loading />
   if (error) return <LoadError message={error} onRetry={reload} />
-  if (!objects?.length) return <Text color="fg.muted">Объектов нет</Text>
+  if (!objects?.length) return <Text color="fg.muted">{emptyText}</Text>
 
   return (
     <Stack gap="3">

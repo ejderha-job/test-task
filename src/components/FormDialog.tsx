@@ -5,6 +5,7 @@ import { FormFields, type FormFieldConfig } from './FormFields'
 
 type FormDialogProps<V extends Record<string, string>, Ctx> = {
   triggerLabel: string
+  triggerVariant?: 'solid' | 'outline'
   title: string
   submitLabel: string
   fields: FormFieldConfig<V, Ctx>[]
@@ -31,7 +32,7 @@ export function FormDialog<V extends Record<string, string>, Ctx = undefined>(
       unmountOnExit
     >
       <Dialog.Trigger asChild>
-        <Button size="sm" colorPalette="blue">
+        <Button size="sm" colorPalette="blue" variant={props.triggerVariant ?? 'solid'}>
           {props.triggerLabel}
         </Button>
       </Dialog.Trigger>
@@ -39,7 +40,7 @@ export function FormDialog<V extends Record<string, string>, Ctx = undefined>(
         <Dialog.Backdrop />
         <Dialog.Positioner>
           <Dialog.Content>
-            {/* Форма размонтируется при закрытии — при следующем открытии она снова пустая */}
+            {/* Форма размонтируется при закрытии — при следующем открытии снова initialValues */}
             <DialogForm {...props} onDone={() => setOpen(false)} />
             <Dialog.CloseTrigger asChild>
               <CloseButton size="sm" />
