@@ -42,5 +42,5 @@ export const formatDate = (iso: string | null) =>
 export const formatDateTime = (iso: string) =>
   new Date(iso).toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' })
 
-export const personName = (p: { full_name: string | null; email: string } | null) =>
-  p ? (p.full_name ?? p.email) : '—'
+export const personName = (p: { full_name: string | null; email: string } | null, fallback = '—') =>
+  p ? (p.full_name ?? p.email) : fallback

@@ -74,3 +74,41 @@ export async function changeTaskStatus(taskId: string, status: TaskStatus) {
   })
   if (error) throw new Error(error.message)
 }
+
+export async function fetchExecutors() {
+  return unwrap(
+    await supabase
+      .from('profiles')
+      .select('id, full_name, email')
+      .eq('role', 'executor')
+      .order('full_name'),
+  )
+}
+
+export type NewTask = {
+  objectId: string
+  title: string
+  description: string
+  dueDate: string | null
+  assigneeId: string
+}
+
+// Возвращает id созданной задачи
+export async function createTask(task: NewTask) {
+  return unwrap(
+    await supabase.rpc('create_task', {
+      p_object_id: task.objectId,
+      p_title: task.title,
+      p_description: task.description,
+      p_due_date: task.dueDate ?? undefined,
+      p_assignee_id: task.assigneeId,
+    }),
+  )
+}
+
+// Возвращает id созданного объекта
+export async function createObject(object: { name: string; address: string }) {
+  return unwrap(
+    await supabase.rpc('create_object', { p_name: object.name, p_address: object.address }),
+  )
+}

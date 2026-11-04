@@ -100,7 +100,7 @@ export type Database = {
       }
       tasks: {
         Row: {
-          assignee_id: string | null
+          assignee_id: string
           created_at: string
           created_by: string | null
           description: string
@@ -111,7 +111,7 @@ export type Database = {
           title: string
         }
         Insert: {
-          assignee_id?: string | null
+          assignee_id: string
           created_at?: string
           created_by?: string | null
           description?: string
@@ -122,7 +122,7 @@ export type Database = {
           title: string
         }
         Update: {
-          assignee_id?: string | null
+          assignee_id?: string
           created_at?: string
           created_by?: string | null
           description?: string
@@ -161,6 +161,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assert_provider: { Args: never; Returns: undefined }
       change_task_status: {
         Args: {
           p_status: Database["public"]["Enums"]["task_status"]
@@ -168,6 +169,21 @@ export type Database = {
         }
         Returns: undefined
       }
+      create_object: {
+        Args: { p_address?: string; p_name: string }
+        Returns: string
+      }
+      create_task: {
+        Args: {
+          p_assignee_id: string
+          p_description?: string
+          p_due_date?: string
+          p_object_id: string
+          p_title: string
+        }
+        Returns: string
+      }
+      executor_name: { Args: { p_user_id: string }; Returns: string }
     }
     Enums: {
       task_status: "new" | "in_progress" | "review" | "done"

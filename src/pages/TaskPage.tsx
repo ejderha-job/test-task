@@ -1,10 +1,12 @@
 import { useState } from 'react'
-import { Alert, Button, Card, DataList, Heading, HStack, Stack, Text, Timeline } from '@chakra-ui/react'
+import { Button, Card, DataList, Heading, HStack, Stack, Text, Timeline } from '@chakra-ui/react'
 import { useParams } from 'react-router-dom'
 import { changeTaskStatus, fetchTask } from '../api'
 import { useAuth } from '../auth/AuthContext'
 import { BackLink } from '../components/BackLink'
-import { LoadError, Loading } from '../components/Status'
+import { ErrorMessage } from '../components/ErrorMessage'
+import { PageLoadFailed } from '../components/PageLoadFailed'
+import { Loading } from '../components/Status'
 import { TaskStatusBadge } from '../components/TaskStatusBadge'
 import { useAsync } from '../hooks/useAsync'
 import {
@@ -15,37 +17,36 @@ import {
   type TaskStatus,
 } from '../lib/tasks'
 
+type Task = NonNullable<Awaited<ReturnType<typeof fetchTask>>>
+
+const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e))
+
 export default function TaskPage() {
   const { taskId = '' } = useParams()
-  const { profile } = useAuth()
   const { data: task, error, loading, reload } = useAsync(() => fetchTask(taskId), [taskId])
-  const [pendingStatus, setPendingStatus] = useState<TaskStatus | null>(null)
-  const [actionError, setActionError] = useState<string | null>(null)
 
   // Первая загрузка; при перезапросе после действия показываем старые данные
   if (loading && !task) return <Loading />
   if (error || !task)
     return (
-      <Stack gap="4">
-        <BackLink to="/objects">Объекты</BackLink>
-        {error ? <LoadError message={error} onRetry={reload} /> : <Heading>Задача не найдена</Heading>}
-      </Stack>
+      <PageLoadFailed
+        error={error}
+        onRetry={reload}
+        notFoundText="Задача не найдена"
+        backTo="/objects"
+        backLabel="Объекты"
+      />
     )
 
-  const applyAction = async (to: TaskStatus) => {
-    setPendingStatus(to)
-    setActionError(null)
-    try {
-      await changeTaskStatus(task.id, to)
-      reload()
-    } catch (e) {
-      setActionError(e instanceof Error ? e.message : String(e))
-    } finally {
-      setPendingStatus(null)
-    }
-  }
+  return <TaskView task={task} busy={loading} onChanged={reload} />
+}
 
-  const actions = availableActions(task, profile)
+function TaskView({ task, busy, onChanged }: { task: Task; busy: boolean; onChanged: () => void }) {
+  const details = [
+    { label: 'Исполнитель', value: personName(task.assignee) },
+    { label: 'Срок', value: formatDate(task.due_date) },
+    { label: 'Описание', value: task.description || '—' },
+  ]
 
   return (
     <Stack gap="6">
@@ -60,69 +61,86 @@ export default function TaskPage() {
       <Card.Root variant="outline">
         <Card.Body gap="5">
           <DataList.Root orientation="horizontal">
-            <DataList.Item>
-              <DataList.ItemLabel>Исполнитель</DataList.ItemLabel>
-              <DataList.ItemValue>{personName(task.assignee)}</DataList.ItemValue>
-            </DataList.Item>
-            <DataList.Item>
-              <DataList.ItemLabel>Срок</DataList.ItemLabel>
-              <DataList.ItemValue>{formatDate(task.due_date)}</DataList.ItemValue>
-            </DataList.Item>
-            <DataList.Item>
-              <DataList.ItemLabel>Описание</DataList.ItemLabel>
-              <DataList.ItemValue>{task.description || '—'}</DataList.ItemValue>
-            </DataList.Item>
+            {details.map((d) => (
+              <DataList.Item key={d.label}>
+                <DataList.ItemLabel>{d.label}</DataList.ItemLabel>
+                <DataList.ItemValue>{d.value}</DataList.ItemValue>
+              </DataList.Item>
+            ))}
           </DataList.Root>
-
-          {actions.length > 0 && (
-            <HStack gap="3" wrap="wrap">
-              {actions.map((a, i) => (
-                <Button
-                  key={a.to}
-                  colorPalette="blue"
-                  variant={i === 0 ? 'solid' : 'outline'}
-                  loading={pendingStatus === a.to}
-                  disabled={pendingStatus !== null || loading}
-                  onClick={() => applyAction(a.to)}
-                >
-                  {a.label}
-                </Button>
-              ))}
-            </HStack>
-          )}
-
-          {actionError && (
-            <Alert.Root status="error" size="sm">
-              <Alert.Indicator />
-              <Alert.Title>{actionError}</Alert.Title>
-            </Alert.Root>
-          )}
+          <TaskActions task={task} busy={busy} onChanged={onChanged} />
         </Card.Body>
       </Card.Root>
 
       <Stack gap="4">
         <Heading size="lg">История</Heading>
-        {task.history.length === 0 ? (
-          <Text color="fg.muted">Пусто</Text>
-        ) : (
-          <Timeline.Root size="sm">
-            {task.history.map((h) => (
-              <Timeline.Item key={h.id}>
-                <Timeline.Connector>
-                  <Timeline.Separator />
-                  <Timeline.Indicator />
-                </Timeline.Connector>
-                <Timeline.Content>
-                  <Timeline.Title>{h.text}</Timeline.Title>
-                  <Timeline.Description>
-                    {formatDateTime(h.created_at)} · {personName(h.author)}
-                  </Timeline.Description>
-                </Timeline.Content>
-              </Timeline.Item>
-            ))}
-          </Timeline.Root>
-        )}
+        <TaskHistory history={task.history} />
       </Stack>
     </Stack>
+  )
+}
+
+function TaskActions({ task, busy, onChanged }: { task: Task; busy: boolean; onChanged: () => void }) {
+  const { profile } = useAuth()
+  const [pendingStatus, setPendingStatus] = useState<TaskStatus | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const actions = availableActions(task, profile)
+
+  if (actions.length === 0) return null
+
+  const applyAction = async (to: TaskStatus) => {
+    setPendingStatus(to)
+    setError(null)
+    try {
+      await changeTaskStatus(task.id, to)
+      onChanged()
+    } catch (e) {
+      setError(errorText(e))
+    } finally {
+      setPendingStatus(null)
+    }
+  }
+
+  return (
+    <Stack gap="3">
+      <HStack gap="3" wrap="wrap">
+        {actions.map((a, i) => (
+          <Button
+            key={a.to}
+            colorPalette="blue"
+            variant={i === 0 ? 'solid' : 'outline'}
+            loading={pendingStatus === a.to}
+            disabled={pendingStatus !== null || busy}
+            onClick={() => applyAction(a.to)}
+          >
+            {a.label}
+          </Button>
+        ))}
+      </HStack>
+      {error && <ErrorMessage message={error} />}
+    </Stack>
+  )
+}
+
+function TaskHistory({ history }: { history: Task['history'] }) {
+  if (history.length === 0) return <Text color="fg.muted">Пусто</Text>
+
+  return (
+    <Timeline.Root size="sm">
+      {history.map((h) => (
+        <Timeline.Item key={h.id}>
+          <Timeline.Connector>
+            <Timeline.Separator />
+            <Timeline.Indicator />
+          </Timeline.Connector>
+          <Timeline.Content>
+            <Timeline.Title>{h.text}</Timeline.Title>
+            <Timeline.Description>
+              {formatDateTime(h.created_at)} · {personName(h.author)}
+            </Timeline.Description>
+          </Timeline.Content>
+        </Timeline.Item>
+      ))}
+    </Timeline.Root>
   )
 }
