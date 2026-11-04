@@ -1,9 +1,10 @@
-import { Button, Heading, HStack, Stack, Text } from '@chakra-ui/react'
-import { Link as RouterLink, useParams } from 'react-router-dom'
+import { Heading, HStack, Stack, Text } from '@chakra-ui/react'
+import { useParams } from 'react-router-dom'
 import { fetchObjectWithTasks } from '../api'
 import { useAuth } from '../auth/AuthContext'
 import { BackLink } from '../components/BackLink'
 import { ListItemCard } from '../components/ListItemCard'
+import { NewTaskDialog } from '../components/NewTaskDialog'
 import { PageLoadFailed } from '../components/PageLoadFailed'
 import { Loading } from '../components/Status'
 import { TaskStatusBadge } from '../components/TaskStatusBadge'
@@ -26,7 +27,8 @@ export default function ObjectPage() {
     [objectId],
   )
 
-  if (loading) return <Loading />
+  // При обновлении после создания задачи показываем старые данные, а не спиннер на всю страницу
+  if (loading && !data) return <Loading />
   if (error || !data?.object)
     return (
       <PageLoadFailed
@@ -51,19 +53,11 @@ export default function ObjectPage() {
       <Stack gap="3">
         <HStack justify="space-between">
           <Heading size="lg">Задачи</Heading>
-          {profile?.role === 'provider' && <NewTaskButton objectId={object.id} />}
+          {profile?.role === 'provider' && <NewTaskDialog objectId={object.id} onCreated={reload} />}
         </HStack>
         <ObjectTaskList tasks={tasks} />
       </Stack>
     </Stack>
-  )
-}
-
-function NewTaskButton({ objectId }: { objectId: string }) {
-  return (
-    <Button asChild size="sm" colorPalette="blue">
-      <RouterLink to={`/objects/${objectId}/tasks/new`}>+ Создать задачу</RouterLink>
-    </Button>
   )
 }
 

@@ -1,8 +1,8 @@
-import { Badge, Button, Heading, HStack, Stack, Text } from '@chakra-ui/react'
-import { Link as RouterLink } from 'react-router-dom'
+import { Badge, Heading, HStack, Stack, Text } from '@chakra-ui/react'
 import { fetchObjects } from '../api'
 import { useAuth } from '../auth/AuthContext'
 import { ListItemCard } from '../components/ListItemCard'
+import { NewObjectDialog } from '../components/NewObjectDialog'
 import { LoadError, Loading } from '../components/Status'
 import { useAsync } from '../hooks/useAsync'
 
@@ -16,25 +16,17 @@ export default function ObjectsPage() {
     <Stack gap="6">
       <HStack justify="space-between">
         <Heading size="2xl">Объекты</Heading>
-        {profile?.role === 'provider' && <NewObjectButton />}
+        {profile?.role === 'provider' && <NewObjectDialog onCreated={objects.reload} />}
       </HStack>
       <ObjectList state={objects} />
     </Stack>
   )
 }
 
-function NewObjectButton() {
-  return (
-    <Button asChild size="sm" colorPalette="blue">
-      <RouterLink to="/objects/new">+ Создать объект</RouterLink>
-    </Button>
-  )
-}
-
 function ObjectList({ state }: { state: ObjectsState }) {
   const { data: objects, error, loading, reload } = state
 
-  if (loading) return <Loading />
+  if (loading && !objects) return <Loading />
   if (error) return <LoadError message={error} onRetry={reload} />
   if (!objects?.length) return <Text color="fg.muted">Объектов нет</Text>
 

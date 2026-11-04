@@ -8,7 +8,7 @@ Vite + React 19 + TypeScript app for managing objects (sites) and their tasks. A
 
 ## UI
 
-Chakra UI v3 (`ChakraProvider value={defaultSystem}` in `src/main.tsx`; requires `@emotion/react`). No custom CSS files — style with Chakra props and semantic tokens (`fg.muted`, `bg.subtle`, …) so dark mode works. Dark mode follows the OS via `src/theme/colorMode.ts`, which toggles the `dark` class on `<html>` (no `next-themes`). Shared bits: `FormFields` (renders a form from a field-config array — use it for every form), `ListItemCard` (clickable list card), `TaskStatusBadge`, `BackLink`, `Loading`/`LoadError` in `src/components/`. Router links are rendered through Chakra with `asChild`.
+Chakra UI v3 (`ChakraProvider value={defaultSystem}` in `src/main.tsx`; requires `@emotion/react`). No custom CSS files — style with Chakra props and semantic tokens (`fg.muted`, `bg.subtle`, …) so dark mode works. Dark mode follows the OS via `src/theme/colorMode.ts`, which toggles the `dark` class on `<html>` (no `next-themes`). Creating objects and tasks happens in dialogs (`NewObjectDialog` on `/objects`, `NewTaskDialog` on the object page), not on separate pages — new create/edit forms should use `FormDialog` (trigger button + dialog + `FormFields` + submit/error handling). Shared bits: `FormFields` (renders a form from a field-config array — use it for every form), `ListItemCard` (clickable list card), `TaskStatusBadge`, `BackLink`, `Loading`/`LoadError` in `src/components/`. Router links are rendered through Chakra with `asChild`.
 
 ## Code style (JSX)
 
@@ -47,7 +47,7 @@ Static config that doesn't depend on props/state lives at module level, outside 
 
 ## Routing
 
-`react-router-dom` v7 data router, defined in `src/router.tsx` and mounted via `RouterProvider` in `src/main.tsx`. Every screen lives in `src/pages/`. `/login` is standalone; all other routes are children of `src/App.tsx`, which is the shared layout (nav + `<Outlet />`). Routes: `/objects`, `/objects/new` (provider only), `/objects/:objectId`, `/objects/:objectId/tasks/new` (provider only), `/tasks/:taskId`, `/my-tasks` (executor only); `/` and unknown paths redirect.
+`react-router-dom` v7 data router, defined in `src/router.tsx` and mounted via `RouterProvider` in `src/main.tsx`. Every screen lives in `src/pages/`. `/login` is standalone; all other routes are children of `src/App.tsx`, which is the shared layout (nav + `<Outlet />`). Routes: `/objects`, `/objects/:objectId`, `/tasks/:taskId`, `/my-tasks` (executor only); `/` and unknown paths redirect.
 
 ## Supabase / auth
 
