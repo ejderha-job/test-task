@@ -143,3 +143,18 @@ export async function archiveObject(objectId: string) {
   const { error } = await supabase.rpc('archive_object', { p_object_id: objectId })
   if (error) throw new Error(error.message)
 }
+
+// Название, описание и срок задачи (исполнитель не меняется)
+export async function updateTask(
+  taskId: string,
+  task: { title: string; description: string; dueDate: string | null },
+) {
+  const { error } = await supabase.rpc('update_task', {
+    p_task_id: taskId,
+    p_title: task.title,
+    p_description: task.description,
+    // Без срока параметр не передаётся — в базе default null, т.е. срок очищается
+    p_due_date: task.dueDate ?? undefined,
+  })
+  if (error) throw new Error(error.message)
+}

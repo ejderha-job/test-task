@@ -203,6 +203,15 @@ export type Database = {
         Args: { p_address?: string; p_name: string; p_object_id: string }
         Returns: undefined
       }
+      update_task: {
+        Args: {
+          p_description?: string
+          p_due_date?: string
+          p_task_id: string
+          p_title: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       task_status: "new" | "in_progress" | "review" | "done" | "archived"

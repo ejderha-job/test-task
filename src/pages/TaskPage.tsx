@@ -6,6 +6,7 @@ import { useAuth } from '../auth/AuthContext'
 import { ArchiveTaskDialog } from '../components/ArchiveTaskDialog'
 import { AssignExecutorDialog } from '../components/AssignExecutorDialog'
 import { BackLink } from '../components/BackLink'
+import { EditTaskDialog } from '../components/EditTaskDialog'
 import { ErrorMessage } from '../components/ErrorMessage'
 import { PageLoadFailed } from '../components/PageLoadFailed'
 import { Loading } from '../components/Status'
@@ -14,6 +15,7 @@ import { useAsync } from '../hooks/useAsync'
 import {
   availableActions,
   canArchiveTask,
+  canEditTask,
   formatDate,
   formatDateTime,
   personName,
@@ -61,7 +63,10 @@ function TaskView({ task, busy, onChanged }: { task: Task; busy: boolean; onChan
             <Heading size="2xl">{task.title}</Heading>
             <TaskStatusBadge status={task.status} />
           </HStack>
-          {canArchiveTask(task, profile) && <ArchiveTaskDialog task={task} onArchived={onChanged} />}
+          <HStack gap="2">
+            {canEditTask(task, profile) && <EditTaskDialog task={task} onSaved={onChanged} />}
+            {canArchiveTask(task, profile) && <ArchiveTaskDialog task={task} onArchived={onChanged} />}
+          </HStack>
         </HStack>
       </Stack>
 

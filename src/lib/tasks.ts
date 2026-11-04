@@ -27,12 +27,15 @@ const transitions: Record<TaskStatus, Transition[]> = {
   archived: [],
 }
 
-// Архивация задачи — отдельная кнопка с подтверждением (ArchiveTaskDialog), поэтому не в transitions.
-// Должно совпадать с переходами в archived в public.change_task_status.
-const archivableStatuses: TaskStatus[] = ['new', 'in_progress', 'review']
+// Незавершённые задачи: только их постановщик может редактировать (update_task)
+// и архивировать (переход в archived в change_task_status). Должно совпадать с проверками в базе.
+const openStatuses: TaskStatus[] = ['new', 'in_progress', 'review']
 
-export const canArchiveTask = (task: { status: TaskStatus }, profile: Profile | null) =>
-  profile?.role === 'provider' && archivableStatuses.includes(task.status)
+const isProviderOfOpenTask = (task: { status: TaskStatus }, profile: Profile | null) =>
+  profile?.role === 'provider' && openStatuses.includes(task.status)
+
+export const canArchiveTask = isProviderOfOpenTask
+export const canEditTask = isProviderOfOpenTask
 
 export function availableActions(
   task: { status: TaskStatus; assignee_id: string | null },
