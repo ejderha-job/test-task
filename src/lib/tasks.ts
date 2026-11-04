@@ -23,9 +23,16 @@ const transitions: Record<TaskStatus, Transition[]> = {
     { label: 'Вернуть в работу', to: 'in_progress', by: 'provider' },
   ],
   done: [],
-  // Ставится автоматически при архивации объекта, дальше переходов нет
+  // Ставится при архивации объекта или задачи, дальше переходов нет
   archived: [],
 }
+
+// Архивация задачи — отдельная кнопка с подтверждением (ArchiveTaskDialog), поэтому не в transitions.
+// Должно совпадать с переходами в archived в public.change_task_status.
+const archivableStatuses: TaskStatus[] = ['new', 'in_progress', 'review']
+
+export const canArchiveTask = (task: { status: TaskStatus }, profile: Profile | null) =>
+  profile?.role === 'provider' && archivableStatuses.includes(task.status)
 
 export function availableActions(
   task: { status: TaskStatus; assignee_id: string | null },

@@ -8,9 +8,11 @@ import { EditObjectDialog } from '../components/EditObjectDialog'
 import { ListItemCard } from '../components/ListItemCard'
 import { NewTaskDialog } from '../components/NewTaskDialog'
 import { PageLoadFailed } from '../components/PageLoadFailed'
+import { ShowArchivedCheckbox } from '../components/ShowArchivedCheckbox'
 import { Loading } from '../components/Status'
 import { TaskStatusBadge } from '../components/TaskStatusBadge'
 import { useAsync } from '../hooks/useAsync'
+import { useShowArchived } from '../hooks/useShowArchived'
 import { assigneeName, formatDate, type TaskStatus } from '../lib/tasks'
 
 type ObjectTask = {
@@ -24,6 +26,7 @@ type ObjectTask = {
 export default function ObjectPage() {
   const { objectId = '' } = useParams()
   const { profile } = useAuth()
+  const [showArchived] = useShowArchived()
   const { data, error, loading, reload } = useAsync(
     () => fetchObjectWithTasks(objectId),
     [objectId],
@@ -46,6 +49,10 @@ export default function ObjectPage() {
   const isArchived = object.archived_at !== null
   // Архивный объект только для просмотра
   const canEdit = profile?.role === 'provider' && !isArchived
+  // Исполнитель видит архивированные задачи только с включённым флажком; постановщик — всегда
+  const isExecutor = profile?.role === 'executor'
+  const visibleTasks =
+    isExecutor && !showArchived ? tasks.filter((t) => t.status !== 'archived') : tasks
 
   return (
     <Stack gap="6">
@@ -65,8 +72,9 @@ export default function ObjectPage() {
         <HStack justify="space-between">
           <Heading size="lg">Задачи</Heading>
           {canEdit && <NewTaskDialog objectId={object.id} onCreated={reload} />}
+          {isExecutor && <ShowArchivedCheckbox />}
         </HStack>
-        <ObjectTaskList tasks={tasks} />
+        <ObjectTaskList tasks={visibleTasks} />
       </Stack>
     </Stack>
   )

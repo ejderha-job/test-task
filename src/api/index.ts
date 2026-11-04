@@ -64,16 +64,16 @@ export async function fetchTask(taskId: string) {
   )
 }
 
-export async function fetchMyTasks(userId: string) {
-  return unwrap(
-    await supabase
+export async function fetchMyTasks(userId: string, includeArchived: boolean) {
+  let query = supabase
       .from('tasks')
-      // Задачи архивных объектов тоже показываем — у них статус «В архиве»
-      .select('id, title, status, due_date, object:objects(name)')
-      .eq('assignee_id', userId)
-      .neq('status', 'done')
-      .order('due_date'),
-  )
+    // Задачи архивных объектов тоже приходят — у них статус «В архиве»
+    .select('id, title, status, due_date, object:objects(name)')
+    .eq('assignee_id', userId)
+    .neq('status', 'done')
+    .order('due_date')
+  if (!includeArchived) query = query.neq('status', 'archived')
+  return unwrap(await query)
 }
 
 export async function changeTaskStatus(taskId: string, status: TaskStatus) {

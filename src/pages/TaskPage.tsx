@@ -3,6 +3,7 @@ import { Button, Card, DataList, Heading, HStack, Stack, Text, Timeline } from '
 import { useParams } from 'react-router-dom'
 import { changeTaskStatus, fetchTask } from '../api'
 import { useAuth } from '../auth/AuthContext'
+import { ArchiveTaskDialog } from '../components/ArchiveTaskDialog'
 import { AssignExecutorDialog } from '../components/AssignExecutorDialog'
 import { BackLink } from '../components/BackLink'
 import { ErrorMessage } from '../components/ErrorMessage'
@@ -12,6 +13,7 @@ import { TaskStatusBadge } from '../components/TaskStatusBadge'
 import { useAsync } from '../hooks/useAsync'
 import {
   availableActions,
+  canArchiveTask,
   formatDate,
   formatDateTime,
   personName,
@@ -43,6 +45,7 @@ export default function TaskPage() {
 }
 
 function TaskView({ task, busy, onChanged }: { task: Task; busy: boolean; onChanged: () => void }) {
+  const { profile } = useAuth()
   const details = [
     { label: 'Исполнитель', value: <TaskAssignee task={task} onChanged={onChanged} /> },
     { label: 'Срок', value: formatDate(task.due_date) },
@@ -53,9 +56,12 @@ function TaskView({ task, busy, onChanged }: { task: Task; busy: boolean; onChan
     <Stack gap="6">
       <Stack gap="2">
         {task.object && <BackLink to={`/objects/${task.object.id}`}>{task.object.name}</BackLink>}
-        <HStack gap="3" wrap="wrap">
-          <Heading size="2xl">{task.title}</Heading>
-          <TaskStatusBadge status={task.status} />
+        <HStack justify="space-between" align="start" gap="4" wrap="wrap">
+          <HStack gap="3" wrap="wrap">
+            <Heading size="2xl">{task.title}</Heading>
+            <TaskStatusBadge status={task.status} />
+          </HStack>
+          {canArchiveTask(task, profile) && <ArchiveTaskDialog task={task} onArchived={onChanged} />}
         </HStack>
       </Stack>
 
