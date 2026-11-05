@@ -73,6 +73,8 @@ Package manager is **pnpm** (`pnpm-lock.yaml`).
 - `pnpm lint` — ESLint over the repo (currently broken: `typescript-eslint` 8.x refuses to run with TypeScript 7)
 - `pnpm preview` — serve the built `dist/`
 
+Deploy: Vercel, configured in `vercel.json` (pnpm build → `dist`, SPA rewrite of all paths to `index.html`, security headers; Node 22 via `engines`). `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` must be set in Vercel env vars (baked in at build time). Steps in `README.md`.
+
 No test runner is configured.
 
 ## Structure and config notes

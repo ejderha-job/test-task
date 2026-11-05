@@ -1,75 +1,28 @@
-# React + TypeScript + Vite
+# Объекты и задачи
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Веб-приложение для постановщиков (`provider`) и исполнителей (`executor`): объекты, задачи, статусы, история. Фронтенд — Vite + React + Chakra UI, бэкенд — Supabase (Auth, Postgres, RLS, RPC). Подробности архитектуры и правил доступа — в `CLAUDE.md`.
 
-Currently, two official plugins are available:
+## Локальный запуск
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```sh
+cp .env.example .env.local   # вписать URL проекта и anon key
+pnpm install
+pnpm dev
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+## Деплой на Vercel
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+1. Импортировать репозиторий в Vercel (или `vercel` из CLI). Настройки сборки берутся из `vercel.json`: `pnpm install --frozen-lockfile`, `pnpm build`, папка `dist`, Node 22.
+2. В **Project → Settings → Environment Variables** добавить (для Production и Preview):
+   - `VITE_SUPABASE_URL` — `https://zmybghjwmghkvjzhbjvl.supabase.co`
+   - `VITE_SUPABASE_ANON_KEY` — публичный anon key (Supabase → Project Settings → API).
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+   Переменные `VITE_*` встраиваются в сборку, поэтому после их изменения нужен redeploy. Ключ `service_role` во фронтенд и в Vercel **не добавлять**.
+3. В Supabase → **Authentication → URL Configuration** указать адрес сайта на Vercel в *Site URL* (и в *Redirect URLs*) — нужно для ссылок из писем (сброс пароля и т. п.).
+4. В Supabase → **Authentication → Sign In / Providers** выключить «Allow new users to sign up»: пользователи создаются вручную, с ролью в `app_metadata.role`.
 
-```
+`vercel.json` перенаправляет все пути на `index.html`, поэтому прямые ссылки вида `/tasks/<id>` открываются и после перезагрузки страницы.
+
+## База данных
+
+Схема и функции — в `supabase/migrations/`, тестовые данные — `supabase/seed.sql`. Миграции уже применены к проекту `zmybghjwmghkvjzhbjvl`; при деплое фронтенда база не меняется.
