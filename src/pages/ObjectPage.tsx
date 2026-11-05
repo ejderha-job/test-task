@@ -19,6 +19,7 @@ type ObjectTask = {
   id: string
   title: string
   status: TaskStatus
+  archived_at: string | null
   due_date: string | null
   assignee: { full_name: string | null; email: string } | null
 }
@@ -52,7 +53,7 @@ export default function ObjectPage() {
   // Исполнитель видит архивированные задачи только с включённым флажком; постановщик — всегда
   const isExecutor = profile?.role === 'executor'
   const visibleTasks =
-    isExecutor && !showArchived ? tasks.filter((t) => t.status !== 'archived') : tasks
+    isExecutor && !showArchived ? tasks.filter((t) => t.archived_at === null) : tasks
 
   return (
     <Stack gap="6">
@@ -107,6 +108,7 @@ function ObjectTaskList({ tasks }: { tasks: ObjectTask[] }) {
       title={t.title}
       meta={`${assigneeName(t.assignee)} · до ${formatDate(t.due_date)}`}
       aside={<TaskStatusBadge status={t.status} />}
+      archived={t.archived_at !== null}
     />
   ))
 }

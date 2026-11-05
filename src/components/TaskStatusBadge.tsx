@@ -5,10 +5,11 @@ const palette: Record<TaskStatus, string> = {
   new: 'gray',
   in_progress: 'blue',
   review: 'orange',
-  done: 'green',
-  archived: 'purple',
+  accepted: 'green',
+  rework: 'red',
 }
 
+// Архив — не статус: архивные задачи помечаются штриховкой карточки (archivedHatch), не меткой
 export function TaskStatusBadge({ status }: { status: TaskStatus }) {
   return <Badge colorPalette={palette[status]}>{statusLabels[status]}</Badge>
 }

@@ -18,16 +18,13 @@ function unwrapMaybe<D>({ data, error }: Result<D>): D {
 
 // У tasks две ссылки на profiles (assignee_id и created_by), поэтому связь указана явно
 const taskListFields =
-  'id, title, status, due_date, assignee_id, assignee:profiles!tasks_assignee_id_fkey(full_name, email)'
+  'id, title, status, archived_at, due_date, assignee_id, assignee:profiles!tasks_assignee_id_fkey(full_name, email)'
 
-export async function fetchObjects() {
-  return unwrap(
-    await supabase
-      .from('objects')
-      .select('id, name, address, tasks(count)')
-      .is('archived_at', null)
-      .order('name'),
-  )
+// includeArchived — вместе с архивными объектами (флажок «Показать архивированные»)
+export async function fetchObjects(includeArchived: boolean) {
+  let query = supabase.from('objects').select('id, name, address, archived_at, tasks(count)')
+  if (!includeArchived) query = query.is('archived_at', null)
+  return unwrap(await query.order('name'))
 }
 
 export async function fetchObjectWithTasks(objectId: string) {
@@ -53,10 +50,10 @@ export async function fetchTask(taskId: string) {
     await supabase
       .from('tasks')
       .select(
-        `id, title, description, status, due_date, assignee_id,
+        `id, title, description, status, archived_at, due_date, assignee_id,
          object:objects(id, name),
          assignee:profiles!tasks_assignee_id_fkey(full_name, email),
-         history:task_history(id, text, created_at, author:profiles(full_name, email))`,
+         history:task_history(id, text, comment, created_at, author:profiles(full_name, email))`,
       )
       .eq('id', taskId)
       .order('created_at', { referencedTable: 'task_history', ascending: false })
@@ -67,12 +64,12 @@ export async function fetchTask(taskId: string) {
 export async function fetchMyTasks(userId: string, includeArchived: boolean) {
   let query = supabase
       .from('tasks')
-    // Задачи архивных объектов тоже приходят — у них статус «В архиве»
-    .select('id, title, status, due_date, object:objects(name)')
+    // Задачи архивных объектов тоже в архиве (archived_at), их показываем только с флажком
+    .select('id, title, status, archived_at, due_date, object:objects(name)')
     .eq('assignee_id', userId)
-    .neq('status', 'done')
+    .neq('status', 'accepted')
     .order('due_date')
-  if (!includeArchived) query = query.neq('status', 'archived')
+  if (!includeArchived) query = query.is('archived_at', null)
   return unwrap(await query)
 }
 
@@ -139,6 +136,11 @@ export async function updateObject(objectId: string, object: { name: string; add
 }
 
 // Мягкое удаление объекта
+export async function archiveTask(taskId: string) {
+  const { error } = await supabase.rpc('archive_task', { p_task_id: taskId })
+  if (error) throw new Error(error.message)
+}
+
 export async function archiveObject(objectId: string) {
   const { error } = await supabase.rpc('archive_object', { p_object_id: objectId })
   if (error) throw new Error(error.message)
@@ -155,6 +157,21 @@ export async function updateTask(
     p_description: task.description,
     // Без срока параметр не передаётся — в базе default null, т.е. срок очищается
     p_due_date: task.dueDate ?? undefined,
+  })
+  if (error) throw new Error(error.message)
+}
+
+// Снять исполнителя: задача возвращается в статус «Новая» без исполнителя
+export async function unassignTask(taskId: string) {
+  const { error } = await supabase.rpc('unassign_task', { p_task_id: taskId })
+  if (error) throw new Error(error.message)
+}
+
+// Вернуть задачу с проверки на доработку — только с комментарием
+export async function returnTaskForRework(taskId: string, comment: string) {
+  const { error } = await supabase.rpc('return_task_for_rework', {
+    p_task_id: taskId,
+    p_comment: comment,
   })
   if (error) throw new Error(error.message)
 }

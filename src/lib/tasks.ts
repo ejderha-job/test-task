@@ -7,9 +7,12 @@ export const statusLabels: Record<TaskStatus, string> = {
   new: 'Новая',
   in_progress: 'В работе',
   review: 'На проверке',
-  done: 'Выполнена',
-  archived: 'В архиве',
+  accepted: 'Принята',
+  rework: 'На доработке',
 }
+
+// Архив — не статус, а признак tasks.archived_at: архивная задача заморожена целиком
+type TaskState = { status: TaskStatus; archived_at: string | null }
 
 type Transition = { label: string; to: TaskStatus; by: 'assignee' | 'provider' }
 
@@ -18,30 +21,34 @@ type Transition = { label: string; to: TaskStatus; by: 'assignee' | 'provider' }
 const transitions: Record<TaskStatus, Transition[]> = {
   new: [{ label: 'Взять в работу', to: 'in_progress', by: 'assignee' }],
   in_progress: [{ label: 'Отправить на проверку', to: 'review', by: 'assignee' }],
-  review: [
-    { label: 'Принять', to: 'done', by: 'provider' },
-    { label: 'Вернуть в работу', to: 'in_progress', by: 'provider' },
-  ],
-  done: [],
-  // Ставится при архивации объекта или задачи, дальше переходов нет
-  archived: [],
+  // «Вернуть на доработку» (→ rework) — отдельная кнопка с обязательным комментарием (ReturnForReworkDialog)
+  review: [{ label: 'Принять', to: 'accepted', by: 'provider' }],
+  rework: [{ label: 'Взять в работу', to: 'in_progress', by: 'assignee' }],
+  accepted: [],
 }
 
-// Незавершённые задачи: только их постановщик может редактировать (update_task)
-// и архивировать (переход в archived в change_task_status). Должно совпадать с проверками в базе.
-const openStatuses: TaskStatus[] = ['new', 'in_progress', 'review']
+const isActive = (task: TaskState) => task.archived_at === null
 
-const isProviderOfOpenTask = (task: { status: TaskStatus }, profile: Profile | null) =>
-  profile?.role === 'provider' && openStatuses.includes(task.status)
+// Постановщик редактирует (update_task) и снимает исполнителя (unassign_task) у непринятых задач
+// вне архива; архивировать (archive_task) можно любую задачу вне архива. Должно совпадать с базой.
+const isProviderOfOpenTask = (task: TaskState, profile: Profile | null) =>
+  profile?.role === 'provider' && isActive(task) && task.status !== 'accepted'
 
-export const canArchiveTask = isProviderOfOpenTask
+export const canArchiveTask = (task: TaskState, profile: Profile | null) =>
+  profile?.role === 'provider' && isActive(task)
+export const canAssignTask = canArchiveTask
 export const canEditTask = isProviderOfOpenTask
+export const canUnassignTask = isProviderOfOpenTask
+
+// review → rework только через return_task_for_rework (с комментарием)
+export const canReturnForRework = (task: TaskState, profile: Profile | null) =>
+  profile?.role === 'provider' && isActive(task) && task.status === 'review'
 
 export function availableActions(
-  task: { status: TaskStatus; assignee_id: string | null },
+  task: TaskState & { assignee_id: string | null },
   profile: Profile | null,
 ) {
-  if (!profile) return []
+  if (!profile || !isActive(task)) return []
   return transitions[task.status].filter((t) =>
     t.by === 'provider'
       ? profile.role === 'provider'

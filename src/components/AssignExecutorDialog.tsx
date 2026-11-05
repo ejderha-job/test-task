@@ -11,7 +11,7 @@ const fields: FormFieldConfig<FormValues, Executor[]>[] = [
     name: 'assigneeId',
     label: 'Исполнитель',
     required: true,
-    helper: 'После назначения исполнителя сменить нельзя',
+    helper: 'Чтобы сменить исполнителя, его нужно будет убрать — задача вернётся в статус «Новая»',
     render: ({ value, onChange, ctx: executors }) => (
       <ExecutorSelect
         executors={executors}

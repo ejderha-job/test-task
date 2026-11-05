@@ -1,4 +1,4 @@
-import { changeTaskStatus } from '../api'
+import { archiveTask } from '../api'
 import { ConfirmDialog } from './ConfirmDialog'
 
 // Кнопка «В архив» + подтверждение для отдельной задачи
@@ -10,7 +10,7 @@ export function ArchiveTaskDialog({
   onArchived: () => void
 }) {
   const handleConfirm = async () => {
-    await changeTaskStatus(task.id, 'archived')
+    await archiveTask(task.id)
     onArchived()
   }
 
@@ -18,7 +18,7 @@ export function ArchiveTaskDialog({
     <ConfirmDialog
       triggerLabel="В архив"
       title="Архивировать задачу?"
-      description={`Задача «${task.title}» получит статус «В архиве». Исполнитель продолжит её видеть, но работать с ней будет нельзя. Вернуть задачу из архива нельзя.`}
+      description={`Задача «${task.title}» уйдёт в архив, её статус сохранится. Исполнитель сможет её видеть, но работать с ней будет нельзя. Вернуть задачу из архива нельзя.`}
       confirmLabel="Архивировать"
       onConfirm={handleConfirm}
     />

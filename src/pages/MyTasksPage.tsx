@@ -44,6 +44,7 @@ function MyTaskList({ state }: { state: MyTasksState }) {
           title={t.title}
           meta={`${t.object?.name ?? '—'} · до ${formatDate(t.due_date)}`}
           aside={<TaskStatusBadge status={t.status} />}
+          archived={t.archived_at !== null}
         />
       ))}
     </Stack>

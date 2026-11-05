@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Card, DataList, Heading, HStack, Stack, Text, Timeline } from '@chakra-ui/react'
+import { Badge, Button, Card, DataList, Heading, HStack, Stack, Text, Timeline } from '@chakra-ui/react'
 import { useParams } from 'react-router-dom'
 import { changeTaskStatus, fetchTask } from '../api'
 import { useAuth } from '../auth/AuthContext'
@@ -9,13 +9,18 @@ import { BackLink } from '../components/BackLink'
 import { EditTaskDialog } from '../components/EditTaskDialog'
 import { ErrorMessage } from '../components/ErrorMessage'
 import { PageLoadFailed } from '../components/PageLoadFailed'
+import { ReturnForReworkDialog } from '../components/ReturnForReworkDialog'
 import { Loading } from '../components/Status'
 import { TaskStatusBadge } from '../components/TaskStatusBadge'
+import { UnassignExecutorDialog } from '../components/UnassignExecutorDialog'
 import { useAsync } from '../hooks/useAsync'
 import {
   availableActions,
   canArchiveTask,
+  canAssignTask,
   canEditTask,
+  canReturnForRework,
+  canUnassignTask,
   formatDate,
   formatDateTime,
   personName,
@@ -62,6 +67,7 @@ function TaskView({ task, busy, onChanged }: { task: Task; busy: boolean; onChan
           <HStack gap="3" wrap="wrap">
             <Heading size="2xl">{task.title}</Heading>
             <TaskStatusBadge status={task.status} />
+            {task.archived_at && <Badge colorPalette="gray">В архиве</Badge>}
           </HStack>
           <HStack gap="2">
             {canEditTask(task, profile) && <EditTaskDialog task={task} onSaved={onChanged} />}
@@ -92,12 +98,24 @@ function TaskView({ task, busy, onChanged }: { task: Task; busy: boolean; onChan
   )
 }
 
-// Исполнитель назначается один раз: после назначения показываем только имя
+// Есть исполнитель — имя (+ «Убрать» для постановщика); нет — «Назначить» для постановщика
 function TaskAssignee({ task, onChanged }: { task: Task; onChanged: () => void }) {
   const { profile } = useAuth()
 
-  if (task.assignee) return <>{personName(task.assignee)}</>
-  if (profile?.role === 'provider' && task.status !== 'archived')
+  if (task.assignee)
+    return (
+      <HStack gap="3" wrap="wrap">
+        <Text>{personName(task.assignee)}</Text>
+        {canUnassignTask(task, profile) && (
+          <UnassignExecutorDialog
+            taskId={task.id}
+            executorName={personName(task.assignee)}
+            onUnassigned={onChanged}
+          />
+        )}
+      </HStack>
+    )
+  if (canAssignTask(task, profile))
     return <AssignExecutorDialog taskId={task.id} onAssigned={onChanged} />
   return <Text color="fg.muted">Не назначен</Text>
 }
@@ -107,8 +125,9 @@ function TaskActions({ task, busy, onChanged }: { task: Task; busy: boolean; onC
   const [pendingStatus, setPendingStatus] = useState<TaskStatus | null>(null)
   const [error, setError] = useState<string | null>(null)
   const actions = availableActions(task, profile)
+  const showRework = canReturnForRework(task, profile)
 
-  if (actions.length === 0) return null
+  if (actions.length === 0 && !showRework) return null
 
   const applyAction = async (to: TaskStatus) => {
     setPendingStatus(to)
@@ -138,6 +157,7 @@ function TaskActions({ task, busy, onChanged }: { task: Task; busy: boolean; onC
             {a.label}
           </Button>
         ))}
+        {showRework && <ReturnForReworkDialog taskId={task.id} onReturned={onChanged} />}
       </HStack>
       {error && <ErrorMessage message={error} />}
     </Stack>
@@ -157,6 +177,7 @@ function TaskHistory({ history }: { history: Task['history'] }) {
           </Timeline.Connector>
           <Timeline.Content>
             <Timeline.Title>{h.text}</Timeline.Title>
+            {h.comment && <HistoryComment text={h.comment} />}
             <Timeline.Description>
               {formatDateTime(h.created_at)} · {personName(h.author)}
             </Timeline.Description>
@@ -164,5 +185,16 @@ function TaskHistory({ history }: { history: Task['history'] }) {
         </Timeline.Item>
       ))}
     </Timeline.Root>
+  )
+}
+
+// Комментарий к записи истории (сейчас — причина возврата на доработку)
+function HistoryComment({ text }: { text: string }) {
+  return (
+    <Card.Root size="sm" variant="subtle" mt="1">
+      <Card.Body>
+        <Text whiteSpace="pre-wrap">{text}</Text>
+      </Card.Body>
+    </Card.Root>
   )
 }

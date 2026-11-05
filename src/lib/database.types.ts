@@ -65,6 +65,7 @@ export type Database = {
       task_history: {
         Row: {
           author_id: string | null
+          comment: string | null
           created_at: string
           id: number
           task_id: string
@@ -72,6 +73,7 @@ export type Database = {
         }
         Insert: {
           author_id?: string | null
+          comment?: string | null
           created_at?: string
           id?: never
           task_id: string
@@ -79,6 +81,7 @@ export type Database = {
         }
         Update: {
           author_id?: string | null
+          comment?: string | null
           created_at?: string
           id?: never
           task_id?: string
@@ -103,6 +106,7 @@ export type Database = {
       }
       tasks: {
         Row: {
+          archived_at: string | null
           assignee_id: string | null
           created_at: string
           created_by: string | null
@@ -114,6 +118,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          archived_at?: string | null
           assignee_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -125,6 +130,7 @@ export type Database = {
           title: string
         }
         Update: {
+          archived_at?: string | null
           assignee_id?: string | null
           created_at?: string
           created_by?: string | null
@@ -165,11 +171,16 @@ export type Database = {
     }
     Functions: {
       archive_object: { Args: { p_object_id: string }; Returns: undefined }
+      archive_task: { Args: { p_task_id: string }; Returns: undefined }
       assert_object_active: {
         Args: { p_object_id: string }
         Returns: undefined
       }
       assert_provider: { Args: never; Returns: undefined }
+      assert_task_not_archived: {
+        Args: { p_task: Database["public"]["Tables"]["tasks"]["Row"] }
+        Returns: undefined
+      }
       assign_task: {
         Args: { p_assignee_id: string; p_task_id: string }
         Returns: undefined
@@ -199,6 +210,11 @@ export type Database = {
         Returns: Database["public"]["Enums"]["user_role"]
       }
       executor_name: { Args: { p_user_id: string }; Returns: string }
+      return_task_for_rework: {
+        Args: { p_comment: string; p_task_id: string }
+        Returns: undefined
+      }
+      unassign_task: { Args: { p_task_id: string }; Returns: undefined }
       update_object: {
         Args: { p_address?: string; p_name: string; p_object_id: string }
         Returns: undefined
@@ -214,7 +230,7 @@ export type Database = {
       }
     }
     Enums: {
-      task_status: "new" | "in_progress" | "review" | "done" | "archived"
+      task_status: "new" | "in_progress" | "review" | "accepted" | "rework"
       user_role: "provider" | "executor"
     }
     CompositeTypes: {
@@ -343,7 +359,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      task_status: ["new", "in_progress", "review", "done", "archived"],
+      task_status: ["new", "in_progress", "review", "accepted", "rework"],
       user_role: ["provider", "executor"],
     },
   },
