@@ -10,6 +10,15 @@ pnpm install
 pnpm dev
 ```
 
+## Тестовые пользователи
+
+| Пользователь | Роль | Email | Пароль |
+|---|---|---|---|
+| Анна Смирнова | Постановщик (`provider`) | anna@example.com | `9RF0_OB2dGYdccxr` |
+| Ольга Кузнецова | Постановщик (`provider`) | olga@example.com | `FNSaz_XD63IzuGeO` |
+| Иван Петров | Исполнитель (`executor`) | ivan@example.com | `eavvOBjw_ybd1buD` |
+| Пётр Сидоров | Исполнитель (`executor`) | petr@example.com | `p-RA-YOaeiKRBmjK` |
+
 ## Деплой на Vercel
 
 1. Импортировать репозиторий в Vercel (или `vercel` из CLI). Настройки сборки берутся из `vercel.json`: `pnpm install --frozen-lockfile`, `pnpm build`, папка `dist`, Node 22.
